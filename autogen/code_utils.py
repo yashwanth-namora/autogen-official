@@ -16,7 +16,7 @@ try:
 except ImportError:
     docker = None
 
-DEFAULT_MODEL = "gpt-4"
+DEFAULT_MODEL = "gpt-4-1106-preview"
 FAST_MODEL = "gpt-3.5-turbo"
 # Regular expression for finding a code block
 # ```[ \t]*(\w+)?[ \t]*\r?\n(.*?)[ \t]*\r?\n``` Matches multi-line code blocks.
