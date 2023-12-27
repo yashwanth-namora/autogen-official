@@ -189,8 +189,11 @@ Then select the next role from {[agent.name for agent in agents]} to play. Only 
     def select_speaker(self, last_speaker: Agent, selector: ConversableAgent):
         """Select the next speaker."""
         selected_agent, agents = self._prepare_and_select_agents(last_speaker)
+        if last_speaker.name == 'namora_ai_agent':
+            return [agent for agent in agents if agent.name == 'planner_agent'][0]
         if selected_agent:
             return selected_agent
+        
         # auto speaker selection
         selector.update_system_message(self.select_speaker_msg(agents))
         context = self.messages + [{"role": "system", "content": self.select_speaker_prompt(agents)}]
