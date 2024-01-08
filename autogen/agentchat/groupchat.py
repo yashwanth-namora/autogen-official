@@ -40,9 +40,10 @@ class GroupChat:
     func_call_filter: Optional[bool] = True
     speaker_selection_method: Optional[str] = "auto"
     allow_repeat_speaker: Optional[Union[bool, List[Agent]]] = True
+    already_planner_agent_called: Optional[bool] = False
 
     _VALID_SPEAKER_SELECTION_METHODS = ["auto", "manual", "random", "round_robin"]
-
+    
     @property
     def agent_names(self) -> List[str]:
         """Return the names of the agents in the group chat."""
@@ -189,9 +190,14 @@ Then select the next role from {[agent.name for agent in agents]} to play. Only 
     def select_speaker(self, last_speaker: Agent, selector: ConversableAgent):
         """Select the next speaker."""
         selected_agent, agents = self._prepare_and_select_agents(last_speaker)
-        if last_speaker.name == 'namora_ai_agent':
-            return [agent for agent in agents if agent.name == 'planner_agent'][0]
+        print("LAST_SPEAKER: ", last_speaker.name)
+        if last_speaker.name == 'namora_ai_agent' and not self.already_planner_agent_called:
+            planner_agent = [agent for agent in agents if agent.name == 'planner_agent'][0]
+            print("PLANNER_NEXT_SPEAKER: ", planner_agent.name)
+            self.already_planner_agent_called = True
+            return planner_agent
         if selected_agent:
+            print("DEFAULT_NEXT_SPEAKER: ", selected_agent.name)
             return selected_agent
         
         # auto speaker selection
@@ -214,6 +220,7 @@ Then select the next role from {[agent.name for agent in agents]} to play. Only 
 
         # Return the result
         try:
+            print("GENERAL_NEXT_SPEAKER: ", name)
             return self.agent_by_name(name)
         except ValueError:
             return self.next_agent(last_speaker, agents)
@@ -221,7 +228,14 @@ Then select the next role from {[agent.name for agent in agents]} to play. Only 
     async def a_select_speaker(self, last_speaker: Agent, selector: ConversableAgent):
         """Select the next speaker."""
         selected_agent, agents = self._prepare_and_select_agents(last_speaker)
+        print("LAST_SPEAKER: ", last_speaker.name)
+        if last_speaker.name == 'namora_ai_agent' and not self.already_planner_agent_called:
+            planner_agent = [agent for agent in agents if agent.name == 'planner_agent'][0]
+            print("PLANNER_AS_FIRST_SPEAKER: ", planner_agent.name)
+            self.already_planner_agent_called = True
+            return planner_agent
         if selected_agent:
+            print("DEFAULT_NEXT_SPEAKER: ", selected_agent.name)
             return selected_agent
         # auto speaker selection
         selector.update_system_message(self.select_speaker_msg(agents))
@@ -249,6 +263,7 @@ Then select the next role from {[agent.name for agent in agents]} to play. Only 
 
         # Return the result
         try:
+            print("GENERAL_NEXT_SPEAKER: ", name)
             return self.agent_by_name(name)
         except ValueError:
             return self.next_agent(last_speaker, agents)
@@ -293,7 +308,6 @@ Then select the next role from {[agent.name for agent in agents]} to play. Only 
 
 class GroupChatManager(ConversableAgent):
     """(In preview) A chat manager agent that can manage a group chat of multiple agents."""
-
     def __init__(
         self,
         groupchat: GroupChat,
@@ -378,6 +392,7 @@ class GroupChatManager(ConversableAgent):
         sender: Optional[Agent] = None,
         config: Optional[GroupChat] = None,
     ):
+        print("MANAGER is RUNNING!")
         """Run a group chat asynchronously."""
         if messages is None:
             messages = self._oai_messages[sender]
